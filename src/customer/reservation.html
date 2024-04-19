@@ -1,0 +1,138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+    <title>Rehbar</title>
+    <style>
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        background-color: #f4f4f4;
+      }
+      /* Container styles */
+      .booking-container {
+        background-color: #ffffff;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        width: 500px;
+        padding: 25px;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        
+        transform: translate(-50%, -50%);
+      }
+      .booking-container {
+        background-color: rgba(
+          255,
+          255,
+          255,
+          0.6
+        ); /* Transparent white background */
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        width: 300px;
+        text-align: left;
+        padding: 30px;
+        padding-right: 3%;
+      }
+      .bookingform-heading {
+        text-align: center;
+        font-size: 30px;
+        font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+        margin-bottom: 20px;
+        font-weight: bold;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      .form-group label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+      }
+      .form-input,
+      .form-select {
+        width: 108%;
+        padding: 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      .form-group input[type="text"],
+      .form-group input[type="cnic"],
+      .form-group input[type="hotel-name"],
+      .form-group input[type="contact"] {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      .reserve-button {
+        background-color: #003366;
+        color: white;
+        border: none;
+        padding: 12px 0;
+        border-radius: 4px;
+        cursor: pointer;
+        width: 108%;
+        font-size: 16px;
+        transition: background-color 0.3s ease;
+      }
+      .reserve-button:hover {
+        background-color: #001f3f;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="booking-container">
+      <div class="background-image"></div>
+      <div class="booking-form">
+        <h1 class="bookingform-heading">Booking Form</h1>
+        <form id="bookingForm">
+          <div class="form-group">
+            <label for="uname">Username</label>
+            <input
+              type="text"
+              placeholder="Enter Username"
+              name="uname"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="cnic">CNIC</label>
+            <input type="cnic" placeholder="Enter CNIC" name="cnic" required />
+          </div>
+          <div class="form-group">
+            <label for="contact">Contact #</label>
+            <input
+              type="contact"
+              placeholder="Enter contact"
+              name="Contact"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="hotel-name">Hotel Name</label>
+            <input
+              type="hotel-name"
+              placeholder="Enter hotel-name"
+              name="Hotel-name"
+              required
+            />
+          </div>
+          <button class="reserve-button" type="submit" onClick="Reserve()">
+            Reserve
+          </button>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>
