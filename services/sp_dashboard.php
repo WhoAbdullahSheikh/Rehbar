@@ -95,7 +95,7 @@
                 <span></span>
                 <p>Create new service</p>
             </div>
-            <div class="action-box update">
+            <div class="action-box update" id="updateButton">
                 <h3>Update</h3>
                 <span></span>
                 <p>Update existing service</p>
@@ -115,7 +115,10 @@
 
     <script>
         document.getElementById('createButton').addEventListener('click', function() {
-            window.location.href = './sp_register.html'; // Redirect to create page
+            window.location.href = './sp_register.php'; // Redirect to create page
+        });
+        document.getElementById('updateButton').addEventListener('click', function() {
+            window.location.href = './sp_update.php'; // Redirect to create page
         });
     </script>
 </body>
