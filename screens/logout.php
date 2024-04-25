@@ -2,5 +2,5 @@
 session_start();
 
 session_unset();
-header("Location: loginscreen.php");
+header("Location: ../home.php");
 ?>

@@ -1,11 +1,12 @@
 <?php
+ // Ensure session start is at the top to access session variables
 
-if (isset($_POST['fullname']) && isset($_POST['email'])) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['fullname']) && isset($_POST['email'])) {
     // Step 1: Connect to your database
     $servername = "localhost";
     $username = "root";
     $password = "";
-    $dbname = "wonderland";
+    $dbname = "Rehbar";
     $alert_message = "";
     $conn = new mysqli($servername, $username, $password, $dbname);
 
@@ -14,31 +15,30 @@ if (isset($_POST['fullname']) && isset($_POST['email'])) {
         die("Connection failed: " . $conn->connect_error);
     }
 
-    // Step 2: Retrieve user information from the form
-    $fullname = $_POST['fullname'];
-    $email = $_POST['email'];
-    $user_email = $_SESSION['email'];
-    $email = $_SESSION['email'];
-    $sql = "SELECT fullname, email FROM users WHERE email = '$email'";
-    $result = $conn->query($sql);
-  
-    if ($result->num_rows > 0) {
-      $row = $result->fetch_assoc();
-      $fullname = $row['fullname'];
-      $email = $row['email'];
-    }
-    // Step 3: Update user information in the database
-    $sql = "UPDATE users SET fullname='$fullname', email='$email' WHERE email='$user_email'";
-    if ($conn->query($sql) === TRUE) {
-        $alert_message = '<div class="alert success"><strong>Success!</strong> Updated successfully</div>';
+    // Step 2: Sanitize and retrieve user information from the form
+    $fullname = $conn->real_escape_string($_POST['fullname']);
+    $email = $conn->real_escape_string($_POST['email']);
+    $user_email = $_SESSION['email']; // Assuming the user's original email is stored in session
+
+    // Step 3: Update user information in the database using prepared statements
+    $sql = "UPDATE service_provider SET fullname=?, email=? WHERE email=?";
+    $stmt = $conn->prepare($sql);
+    if ($stmt) {
+        $stmt->bind_param("sss", $fullname, $email, $user_email);
+        if ($stmt->execute()) {
+            $alert_message = '<div class="alert success"><strong>Success!</strong> Updated successfully.</div>';
+            $_SESSION['email'] = $email; // Update session email if email was changed
+        } else {
+            $alert_message = '<div class="alert warning"><strong>Error!</strong> Failed to update record: ' . $stmt->error . '</div>';
+        }
+        $stmt->close();
     } else {
-        $alert_message = '<div class="alert warning"><strong>Error!</strong> Failed to update record: ' . $conn->error . '</div>';
+        $alert_message = '<div class="alert warning"><strong>Error!</strong> ' . $conn->error . '</div>';
     }
 
     // Close the database connection
     $conn->close();
 }
-
 ?>
 
 <!DOCTYPE html>

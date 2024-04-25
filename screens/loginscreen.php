@@ -1,7 +1,4 @@
-
 <?php
-// Step 1: Connect to your database
-
 session_start();
 
 $servername = "localhost";
@@ -16,33 +13,43 @@ if ($conn->connect_error) {
   die("Connection failed: " . $conn->connect_error);
 }
 
-// Define an empty variable to hold the alert message
 $alert_message = "";
 
-// Step 2: Retrieve form data
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $email = $_POST['email'];
   $password = $_POST['password'];
+  $role = $_POST['role'];  // Make sure 'role' input is present in your form
 
-  // Step 3: Check if user exists in the database
-  $check_user_sql = "SELECT * FROM users WHERE email='$email' AND password='$password'";
-  $result = $conn->query($check_user_sql);
+  // Determine the table to query based on the role
+  $table = ($role == 'service_provider') ? 'service_provider' : 'tourist';
+
+  $stmt = $conn->prepare("SELECT * FROM $table WHERE email = ? AND password = ?");
+  $stmt->bind_param("ss", $email, $password);
+  $stmt->execute();
+  $result = $stmt->get_result();
 
   if ($result->num_rows > 0) {
-
     $_SESSION['email'] = $email;
-    $alert_message = '<div class="alert success"><strong>Success!</strong> Login successful</div>';
-    header("Location: profilescreen.php");
-    exit();
+    $_SESSION['role'] = $role;  // Store the role in session for later use
+
+    // Redirect based on role
+    if ($role == 'tourist') {
+      header("Location: ../home.php"); // Redirect to home page for tourists
+      exit();
+    } else if ($role == 'service_provider') {
+      header("Location: profilescreen.php"); // Redirect to profile page for service providers
+      exit();
+    }
   } else {
-    // User not found or password incorrect
     $alert_message = '<div class="alert"><strong>Error!</strong> Invalid email or password</div>';
   }
+  
+  $stmt->close();
 }
 
-// Close the database connection
 $conn->close();
 ?>
+
 
 
 <!DOCTYPE html>
@@ -690,6 +697,23 @@ $conn->close();
     .alert.warning {
       background-color: #ff9800;
     }
+
+    .form-group select {
+      width: 100%;
+
+      padding: 10px;
+
+      border: 1px solid #ccc;
+
+      border-radius: 5px;
+
+      background-color: #fff;
+    }
+
+    .form-group select:focus {
+      border-color: black;
+      /* Adds focus style similar to other input fields */
+    }
   </style>
 </head>
 
@@ -702,36 +726,28 @@ $conn->close();
 
     <div class="heading">
       <ul>
-      <li><a href="../home.html" class="under">HOME</a></li>
-        <li><a href="./shopscreen.php" class="under">SHOP</a></li>
+        <li><a href="../home.php" class="under">HOME</a></li>
+       
         <li><a href="./about.html" class="under">ABOUT US</a></li>
         <li><a href="./profilescreen.php"><i class="fa fa-user" style="font-size:20px;color: white"></i></a></li>
       </ul>
     </div>
-    <div class="heading1">
-      <ion-icon name="menu" class="ham"></ion-icon>
-      <div class="menu">
-        <a href="#">
-          <ion-icon name="close" class="close"></ion-icon>
-        </a>
-
-        <ul>
-          <li><a href="#" class="under">HOME</a></li>
-          <li><a href="#" class="under">SHOP</a></li>
-          <li><a href="#" class="under">OUR PRODUCTS</a></li>
-          <li><a href="#" class="under">LOGIN/REGISTER</a></li>
-          <li><a href="#" class="under">ABOUT US</a></li>
-        </ul>
-      </div>
-    </div>
+   
   </header>
   <section>
-  <?php echo $alert_message; ?>
+    <?php echo $alert_message; ?>
     <div class="section">
       <div class="section1">
         <div class="login-container">
           <h2>Login</h2>
-          <form id="login-form" action="loginscreen.php" method="POST">
+          <form  action="loginscreen.php" method="POST">
+            <div class="form-group">
+              <label for="role">Role:</label>
+              <select id="role" name="role" required>
+                <option value="service_provider">Service Provider</option>
+                <option value="tourist">Tourist</option>
+              </select>
+            </div>
             <div class="form-group">
               <label for="email">Email:</label>
               <input type="text" id="email" name="email" required />
@@ -740,6 +756,7 @@ $conn->close();
               <label for="password">Password:</label>
               <input type="password" id="password" name="password" required />
             </div>
+
 
             <button type="submit">Login</button>
           </form>
@@ -774,12 +791,7 @@ $conn->close();
       </div>
     </div>
     <div class="footer2">
-      <div class="product">
-        <div class="heading-footer">Products</div>
-        <div class="div">Women Clothing</div>
-        <div class="div">Men Clothing</div>
-        <div class="div">Accessories</div>
-      </div>
+      
       <div class="services">
         <div class="heading-footer">Customer Care</div>
         <div class="div">Return</div>

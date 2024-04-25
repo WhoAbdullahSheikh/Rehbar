@@ -6,7 +6,6 @@ $dbname = "Rehbar";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
-// Check connection
 if ($conn->connect_error) {
   die("Connection failed: " . $conn->connect_error);
 }
@@ -19,32 +18,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $password = $_POST['password'];
   $role = $_POST['role'];
 
-  // Corrected query with error checking
-  $check_email_sql = "SELECT * FROM users WHERE email = ?";
-  $stmt = $conn->prepare($check_email_sql);
+  $sql = "SELECT email FROM service_provider WHERE email = ? UNION SELECT email FROM tourist WHERE email = ?";
+  $stmt = $conn->prepare($sql);
 
   if ($stmt) {
-    $stmt->bind_param("s", $email);
+    $stmt->bind_param("ss", $email, $email);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-      $alert_message = '<div class="alert"><strong>Already Registered!</strong> Please press login sign in yourself</div>';
+
+      $alert_message = '<div class="alert"><strong>Already Registered!</strong> Please try another email or login.</div>';
     } else {
+
       if ($role == 'service_provider') {
-        $sql = "INSERT INTO service_provider (fullname, email, password) VALUES (?, ?, ?)";
+        $insert_sql = "INSERT INTO service_provider (fullname, email, password) VALUES (?, ?, ?)";
       } else if ($role == 'tourist') {
-        $sql = "INSERT INTO tourist (fullname, email, password) VALUES (?, ?, ?)";
+        $insert_sql = "INSERT INTO tourist (fullname, email, password) VALUES (?, ?, ?)";
       }
 
-      if ($stmt = $conn->prepare($sql)) {
-        $stmt->bind_param("sss", $fullname, $email, $password);
-        if ($stmt->execute()) {
+      if ($insert_stmt = $conn->prepare($insert_sql)) {
+        $insert_stmt->bind_param("sss", $fullname, $email, $password);
+        if ($insert_stmt->execute()) {
           $alert_message = '<div class="alert success"><strong>Success!</strong> You have been registered successfully.</div>';
+          header("Location: registerscreen.php?success=true");
+          exit();
         } else {
-          $alert_message = '<div class="alert"><strong>Error!</strong> ' . $stmt->error . '</div>';
+          $alert_message = '<div class="alert"><strong>Error!</strong> ' . $insert_stmt->error . '</div>';
         }
-        $stmt->close();
+        $insert_stmt->close();
       } else {
         $alert_message = '<div class="alert"><strong>Error!</strong> ' . $conn->error . '</div>';
       }
@@ -1029,7 +1031,7 @@ $conn->close();
 
     <div class="heading">
       <ul>
-        <li><a href="../home.html" class="under">HOME</a></li>
+        <li><a href="../home.php" class="under">HOME</a></li>
         <li><a href="./shopscreen.php" class="under">SHOP</a></li>
         <li><a href="./about.html" class="under">ABOUT US</a></li>
         <li><a href="./profilescreen.php"><i class="fa fa-user" style="font-size:20px;color: white"></i></a></li>
@@ -1061,7 +1063,7 @@ $conn->close();
       <div class="section1">
         <div class="register-container">
           <h2>Register</h2>
-          <form id="register-form" action="registerscreen.php" method="POST">
+          <form id="register-form" action="registerscreen.php" method="POST" onsubmit="return validatePassword()">
             <div class="form-group">
               <label for="fullname">Full Name:</label>
               <input type="text" id="fullname" name="fullname" required />
@@ -1075,7 +1077,7 @@ $conn->close();
               <input type="password" id="password" name="password" required />
             </div>
             <div class="form-group">
-              <label for="password">Re-Password:</label>
+              <label for="repassword">Re-Password:</label>
               <input type="password" id="repassword" name="repassword" required />
             </div>
             <div class="form-group">
@@ -1121,12 +1123,7 @@ $conn->close();
       </div>
     </div>
     <div class="footer2">
-      <div class="product">
-        <div class="heading-footer">Products</div>
-        <div class="div">Women Clothing</div>
-        <div class="div">Men Clothing</div>
-        <div class="div">Accessories</div>
-      </div>
+
       <div class="services">
         <div class="heading-footer">Customer Care</div>
         <div class="div">Return</div>
@@ -1163,6 +1160,35 @@ $conn->close();
         }, 3000); // Fade out after 5 seconds
       });
     });
+  </script>
+  <script>
+    window.onload = function() {
+      // Function to check URL parameters for 'success'
+      function getParameterByName(name, url = window.location.href) {
+        name = name.replace(/[\[\]]/g, '\\$&');
+        var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+          results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, ' '));
+      }
+
+      // Check if 'success' parameter is set to 'true'
+      if (getParameterByName('success') === 'true') {
+        alert('Registration successful! Redirecting to login...');
+        window.location.href = './loginscreen.php'; // Redirect to the login page
+      }
+    };
+
+    function validatePassword() {
+      var password = document.getElementById("password").value;
+      var repassword = document.getElementById("repassword").value;
+      if (password !== repassword) {
+        alert("Passwords do not match.");
+        return false; // Prevent form submission
+      }
+      return true; // Allow form submission
+    }
   </script>
 </body>
 

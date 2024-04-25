@@ -10,7 +10,7 @@ if ($userprofile == true) {
   $servername = "localhost";
   $username = "root";
   $password = "";
-  $dbname = "wonderland";
+  $dbname = "rehbar";
 
   $conn = new mysqli($servername, $username, $password, $dbname);
 
@@ -20,7 +20,7 @@ if ($userprofile == true) {
   }
 
   $email = $_SESSION['email'];
-  $sql = "SELECT fullname, email FROM users WHERE email = '$email'";
+  $sql = "SELECT fullname, email FROM service_provider WHERE email = '$email'";
   $result = $conn->query($sql);
 
   if ($result->num_rows > 0) {
@@ -40,7 +40,7 @@ if ($userprofile == true) {
     $folder = "./image/" . $filename;
 
     $alert_message = "";
-    $db = mysqli_connect("localhost", "root", "", "wonderland");
+    $db = mysqli_connect("localhost", "root", "", "Rehbar");
 
 
 
@@ -76,7 +76,7 @@ if ($userprofile == true) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wonderland</title>
+  <title>Rehbar</title>
   <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="./ecommerce.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
@@ -85,7 +85,8 @@ if ($userprofile == true) {
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
-
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
 
   <style>
@@ -105,7 +106,8 @@ if ($userprofile == true) {
       align-items: center;
       height: 60px;
       width: 100%;
-      background: black;
+      background: #0E172C;
+
     }
 
 
@@ -117,7 +119,7 @@ if ($userprofile == true) {
       align-items: center;
       height: 60px;
       width: 100%;
-      background: black;
+      background: #0E172C;
       padding-right: 3%;
     }
 
@@ -141,7 +143,7 @@ if ($userprofile == true) {
     }
 
     .logo a:hover {
-      color: rgb(240, 197, 6);
+      color: #B8C1EC;
       transition-duration: 1s;
     }
 
@@ -166,7 +168,7 @@ if ($userprofile == true) {
     }
 
     .heading ul li a:hover {
-      color: rgb(243, 168, 7);
+      color: #B8C1EC;
       transition-duration: 1s;
     }
 
@@ -606,7 +608,7 @@ if ($userprofile == true) {
       z-index: 1;
       top: 60px;
       left: 0;
-      background-color: #111;
+      background-color: #384669;
       overflow-x: hidden;
       transition: 0.5s;
       padding-top: 60px;
@@ -633,12 +635,12 @@ if ($userprofile == true) {
 
     .sidenav a i {
       font-size: 20px;
-      color: #818181;
+      color: white;
       margin-right: 10px;
     }
 
     .sidenav a span {
-      color: #818181;
+      color: white;
     }
 
     .sidenav a:hover {
@@ -911,6 +913,60 @@ if ($userprofile == true) {
 
       /* Black outline around text */
     }
+
+    .maintenance-message {
+      text-align: center;
+      margin-top: 10%;
+      font-size: 24px;
+      color: rgb(0, 0, 0);
+      font-weight: bold;
+      padding-bottom: 13%;
+    }
+
+    .form-group select {
+      width: 40%;
+
+      padding: 10px;
+
+      border: 1px solid #ccc;
+
+      border-radius: 5px;
+
+      background-color: #fff;
+    }
+
+    .form-group select:focus {
+      border-color: black;
+      /* Adds focus style similar to other input fields */
+    }
+
+    #itemsSection {
+      display: flex;
+      justify-content: space-between;
+      padding: 20px;
+      background-color: white;
+      color: black;
+    }
+
+    .profile-container {
+      flex: 1;
+      padding-right: 20px;
+      /* Adjust spacing between form and map */
+    }
+
+
+    .form-container {
+      flex: 1;
+      margin-right: 20px;
+
+      /* Adjust space between form and map */
+    }
+
+    #map {
+      height: 400px;
+      width: 50%;
+      /* Adjust based on your layout needs */
+    }
   </style>
 </head>
 
@@ -923,11 +979,11 @@ if ($userprofile == true) {
       </a>
       <a href="#" id="itemsButton" onclick="toggleSections('items')">
         <i class="material-icons">favorite</i>
-        <span>Sell Product</span>
+        <span>Provide Service</span>
       </a>
       <a href="#" id="addedProductsButton" onclick="toggleSections('addedItems')">
         <i class="fa fa-shopping-bag"></i>
-        <span>Added Products</span>
+        <span>Your Services</span>
       </a>
       <a href="#">
         <span>How to Add</span>
@@ -940,13 +996,12 @@ if ($userprofile == true) {
     </div>
 
     <div class="logo">
-      <a href="../home.html">Wonderland</a>
+      <a href="../home.php">Rehbar</a>
     </div>
 
     <div class="heading">
       <ul>
-        <li><a href="../home.html" class="under">HOME</a></li>
-        <li><a href="./shopscreen.php" class="under">SHOP</a></li>
+        <li><a href="../home.php" class="under">HOME</a></li>
         <li><a href="./about.html" class="under">ABOUT US</a></li>
 
       </ul>
@@ -996,27 +1051,48 @@ if ($userprofile == true) {
     </div>
     <div id="itemsSection" style="background-color: white; color: black; padding: 20px; padding-left: 15%;">
       <div class="profile-container">
-        <h2>Product Details</h2>
+        <h2>Service Details</h2>
         <div class="section-break">
           <hr />
         </div>
 
         <form action="./profilescreen.php" method="POST" enctype="multipart/form-data">
-          <label for="email">Email</label>
-          <input type="email" id="email" name="email" value="<?php echo $email; ?>">
+          <div class="form-group">
+            <label for="category">Category:</label>
+            <select id="category" name="category" required>
+              <option value="hotels">Hotels</option>
+              <option value="restaurants">Restaurants</option>
+              <option value="transport">Transports</option>
+              <option value="tourguide">Tour Guide</option>
+            </select>
+          </div>
+          <div class="input-container" ;>
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="<?php echo $email; ?>">
+          </div>
           <div class="input-container">
-            <label for="p_name">Product Name:</label>   
+            <label for="p_name">Service Name:</label>
             <input type="text" id="p_name" name="p_name" required>
           </div>
+
           <div class="input-container">
-            <label for="description">Description:</label>
-            <textarea id="description" name="description" required style="border-radius: 10px; height: 200px; width: 40%; font-size: 15px; padding: 10px"></textarea>
+            <label for="location">Location:</label>
+            <textarea id="location" name="location" required style="border-radius: 10px; height: 200px; width: 40%; font-size: 15px; padding: 10px"></textarea>
           </div>
-          <div class="input-container">
-            <label for="price">Price:</label>
-            <div class="price-wrapper">
-              <span class="currency-prefix">Rs.</span>
-              <input type="number" step="10" id="price" name="price" required style="border-radius: 10px; padding: 10px; font-size: 15px; ">
+
+          <div id="map" style="flex: 1; height: 400px;">
+            <!-- Map will be loaded here -->
+          </div>
+          <div id="form-container" style="height: fit-content; ">
+            <div class="input-container" style="width: 50%;">
+              <input type="text" id="start" name="start" placeholder="Start Location">
+            </div>
+            <div class="input-container" style="width: 50%;">
+              <input type="text" id="end" name="end" placeholder="Enter Destination">
+            </div>
+            <div class="input-container">
+              <button onClick="getDirections()" class="btn btn-primary" type="submit" style="width: 20%;">Search
+              </button>
             </div>
           </div>
 
@@ -1030,29 +1106,32 @@ if ($userprofile == true) {
           <div class="section-break">
             <hr />
           </div>
-
-          <div id="display-image">
-            <?php
-            $conn = new mysqli($servername, $username, $password, $dbname); // Assume $conn is your active database connection
-            $result = $conn->query("SELECT * FROM products WHERE email = '" . $conn->real_escape_string($_SESSION['email']) . "'");
-            if ($result->num_rows > 0) {
-              while ($row = $result->fetch_assoc()) {
-                echo '<div class="product-card">';
-                echo '<img class="product-image" src="./image/' . htmlspecialchars($row['filename']) . '" alt="' . htmlspecialchars($row['p_name']) . '">';
-                echo '<div class="product-info">';
-                echo '<p>' . htmlspecialchars($row['p_name']) . '</p>';
-                echo '</div>';
-                echo '<div class="section-break-2"> <hr/></div>';
-                echo '<div class="product-desc">' . htmlspecialchars($row['description']) . '</div>';
-                echo '<p class="product-price">Rs. ' . htmlspecialchars($row['price']) . '</p>';
-                echo '</div>';
-              }
-            } else {
-              echo "<p>No products found.</p>";
-            }
-            $conn->close();
-            ?>
+          <div class="maintenance-message">
+            <i style='font-size:34px; color:rgb(104, 20, 20); ' class='fa'>&#xf06a;</i>
+            This page/component is currently under development. Please check back later.
           </div>
+          <!--<div id="display-image">
+            /*<?php
+              $conn = new mysqli($servername, $username, $password, $dbname); // Assume $conn is your active database connection
+              $result = $conn->query("SELECT * FROM products WHERE email = '" . $conn->real_escape_string($_SESSION['email']) . "'");
+              if ($result->num_rows > 0) {
+                while ($row = $result->fetch_assoc()) {
+                  echo '<div class="product-card">';
+                  echo '<img class="product-image" src="./image/' . htmlspecialchars($row['filename']) . '" alt="' . htmlspecialchars($row['p_name']) . '">';
+                  echo '<div class="product-info">';
+                  echo '<p>' . htmlspecialchars($row['p_name']) . '</p>';
+                  echo '</div>';
+                  echo '<div class="section-break-2"> <hr/></div>';
+                  echo '<div class="product-desc">' . htmlspecialchars($row['description']) . '</div>';
+                  echo '<p class="product-price">Rs. ' . htmlspecialchars($row['price']) . '</p>';
+                  echo '</div>';
+                }
+              } else {
+                echo "<p>No products found.</p>";
+              }
+              $conn->close();
+              ?>*/
+          </div> -->
         </form>
       </div>
 
@@ -1060,31 +1139,14 @@ if ($userprofile == true) {
 
     <div id="itemsAdded" style="background-color: white; color: black; padding: 20px; padding-left: 15%;">
       <div class="profile-container">
-        <h2>Your Added Products</h2>
+        <h2>Your Services</h2>
         <div class="section-break">
           <hr />
         </div>
-        <div id="display-image">
-          <?php
-          $conn = new mysqli($servername, $username, $password, $dbname); // Assume $conn is your active database connection
-          $result = $conn->query("SELECT * FROM products WHERE email = '" . $conn->real_escape_string($_SESSION['email']) . "'");
-          if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-              echo '<div class="product-card">';
-              echo '<img class="product-image" src="./image/' . htmlspecialchars($row['filename']) . '" alt="' . htmlspecialchars($row['p_name']) . '">';
-              echo '<div class="product-info">';
-              echo '<p>' . htmlspecialchars($row['p_name']) . '</p>';
-              echo '</div>';
-              echo '<div class="section-break-2"> <hr/></div>';
-              echo '<div class="product-desc">' . htmlspecialchars($row['description']) . '</div>';
-              echo '<p class="product-price">Rs. ' . htmlspecialchars($row['price']) . '</p>';
-              echo '</div>';
-            }
-          } else {
-            echo "<p>No products found.</p>";
-          }
-          $conn->close();
-          ?>
+
+        <div class="maintenance-message">
+          <i style='font-size:34px; color:rgb(104, 20, 20); ' class='fa'>&#xf06a;</i>
+          This page/component is currently under development. Please check back later.
         </div>
       </div>
     </div>
@@ -1150,7 +1212,18 @@ if ($userprofile == true) {
       });
     });
   </script>
-
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDq7kf2-sAqWNjLPQh8Ye-Nx0pHBSbZ2eM&callback=initMap&libraries=&v=weekly" async defer></script>
+  <script>
+    function initMap() {
+      var mapOptions = {
+        center: new google.maps.LatLng(-34.397, 150.644),
+        zoom: 8,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+      };
+      var map = new google.maps.Map(document.getElementById("map"), mapOptions);
+    }
+  </script>
+  <script src="./components/mapdata.js"></script>
 
 
 
