@@ -31,7 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
 
     $sql = "SELECT * FROM $table_name WHERE username='$username' AND password='$password'";
     $result = $conn->query($sql);
-
+                                                            
     if ($result->num_rows > 0) {
         // User found, set session variables and redirect to appropriate dashboard
         $_SESSION['username'] = $username;
