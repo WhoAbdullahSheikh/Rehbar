@@ -3,72 +3,188 @@ session_start();
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-$userprofile = $_SESSION['email'];
+// Check if the user is logged in
+if (!isset($_SESSION['email'])) {
+  header("Location: loginscreen.php");
+  exit;
+}
 
-if ($userprofile == true) {
-  // Step 1: Connect to your database
-  $servername = "localhost";
-  $username = "root";
-  $password = "";
-  $dbname = "rehbar";
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "rehbar";
 
-  $conn = new mysqli($servername, $username, $password, $dbname);
+// Create connection
+$conn = new mysqli($servername, $username, $password, $dbname);
 
-  // Check connection
-  if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-  }
+// Check connection
+if ($conn->connect_error) {
+  die("Connection failed: " . $conn->connect_error);
+}
 
-  $email = $_SESSION['email'];
-  $sql = "SELECT fullname, email FROM service_provider WHERE email = '$email'";
-  $result = $conn->query($sql);
+// Attempt to retrieve user information
+$email = $_SESSION['email'];
+$sql = "SELECT fullname, email FROM service_provider WHERE email = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $email);
+$stmt->execute();
+$result = $stmt->get_result();
 
-  if ($result->num_rows > 0) {
-    $row = $result->fetch_assoc();
-    $fullname = $row['fullname'];
-    $email = $row['email'];
-  }
+if ($result->num_rows > 0) {
+  $row = $result->fetch_assoc();
+  $fullname = $row['fullname'];
+  $email = $row['email'];
+}
 
-  $msg = "";
-  if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['upload'])) {
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+  if (isset($_POST['uploadHotel'])) {
     $filename = $_FILES["uploadfile"]["name"];
     $tempname = $_FILES["uploadfile"]["tmp_name"];
-    $email = $_SESSION['email'];
-    $description = $_POST['description'];
-    $p_name = $_POST['p_name'];
+    $name = $_POST['name'];
+    $location = $_POST['location'];
     $price = $_POST['price'];
     $folder = "./image/" . $filename;
+    $email = $conn->real_escape_string($_SESSION['email']);
 
-    $alert_message = "";
-    $db = mysqli_connect("localhost", "root", "", "Rehbar");
+    // Move uploaded file
+    if (move_uploaded_file($tempname, $folder)) {
+      $stmt = $conn->prepare("INSERT INTO hotel (filename, email, name, location, price) VALUES (?, ?, ?, ?, ?)");
+      if ($stmt === false) {
+        die('MySQL prepare error: ' . $conn->error);
+      }
 
 
+      $stmt->bind_param("ssssd", $filename, $email, $name, $location, $price);
 
-    // Execute query
-    mysqli_query($db, $sql);
+      if ($stmt->execute()) {
+        $_SESSION['message'] = "Updated successfully";
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit();
+      } else {
+        echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+      }
+    }
+  } elseif (isset($_POST['uploadRestaurant'])) {
+    // Extracting and sanitizing inputs
+    $email = $_SESSION['email'] ?? '';
+    $restaurant = $_POST['restaurant'] ?? '';
+    $location = $_POST['location'] ?? '';
+    $filename = $_FILES["uploadfile"]["name"];
+    $tempname = $_FILES["uploadfile"]["tmp_name"];
+    $folder = "./image/" . $filename;
 
     if (move_uploaded_file($tempname, $folder)) {
-      $stmt = $conn->prepare("INSERT INTO products (filename, email, p_name, description, price) VALUES (?, ?, ?, ?, ?)");
-      $stmt->bind_param("ssssd", $filename, $email, $p_name, $description, $price);
-      $stmt->execute();
-      $_SESSION['message'] = "Updated successfully";
-      header("Location: " . $_SERVER['PHP_SELF']);
-      exit();
+      // Prepare the SQL statement
+      $stmt = $conn->prepare("INSERT INTO restaurant (email, restaurant, location, filename) VALUES (?, ?, ?, ?)");
+      if ($stmt === false) {
+        die('MySQL prepare error: ' . $conn->error);
+      }
+
+      // Binding the parameters and executing the statement
+      $stmt->bind_param("ssss", $email, $restaurant, $location, $filename);
+      if (!$stmt->execute()) {
+        echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+      } else {
+        $_SESSION['message'] = "Restaurant added successfully";
+        header("Location: " . $_SERVER['PHP_SELF'] . "?section=addedItems");
+        exit();
+      }
+    } else {
+      echo "Failed to upload file.";
+    }
+  } elseif (isset($_POST['uploadTransport'])) {
+    $filename = $_FILES["uploadfile"]["name"];
+    $tempname = $_FILES["uploadfile"]["tmp_name"];
+    $transport = $_POST['transport'];
+    $location = $_POST['location'];
+    $service_type = $_POST['service_type'];  // Assuming you have a field to specify the type of transport service
+    $folder = "./image/" . $filename;
+    $email = $conn->real_escape_string($_SESSION['email']);
+
+    // Move uploaded file
+    if (move_uploaded_file($tempname, $folder)) {
+      $stmt = $conn->prepare("INSERT INTO transport (filename, email, transport, location, service_type) VALUES (?, ?, ?, ?, ?)");
+      if (!$stmt) {
+        die('MySQL prepare error: ' . $conn->error);
+      }
+      $stmt->bind_param("sssss", $filename, $email, $transport, $location, $service_type);
+      if ($stmt->execute()) {
+        $_SESSION['message'] = "Transport service added successfully";
+        header("Location: " . $_SERVER['PHP_SELF'] . "?section=transportServices"); // Redirect to a specific section if needed
+        exit();
+      } else {
+        echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+      }
+    } else {
+      echo "Failed to upload file.";
+    }
+  } elseif (isset($_POST['uploadGuide'])) {
+    $filename = $_FILES["uploadfile"]["name"];
+    $tempname = $_FILES["uploadfile"]["tmp_name"];
+    $fullname = $_POST['fullname'];
+    $location = $_POST['location'];
+    $guide_mail = $_POST['guide_mail'];
+    $guide_area = $_POST['guide_area'];  // Assuming you have a field to specify the type of transport service
+    $folder = "./image/" . $filename;
+    $email = $conn->real_escape_string($_SESSION['email']);
+
+    // Move uploaded file
+    if (move_uploaded_file($tempname, $folder)) {
+      $stmt = $conn->prepare("INSERT INTO tourguide (filename, email, guide_mail, fullname, location, guide_area) VALUES (?, ?, ?, ?, ?, ?)");
+      if (!$stmt) {
+        die('MySQL prepare error: ' . $conn->error);
+      }
+      $stmt->bind_param("ssssss", $filename, $email, $guide_mail, $fullname, $location, $guide_area);
+      if ($stmt->execute()) {
+        $_SESSION['message'] = "Tour Guide added successfully";
+        header("Location: " . $_SERVER['PHP_SELF'] . "?section=tourguide"); // Redirect to a specific section if needed
+        exit();
+      } else {
+        echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+      }
     } else {
       echo "Failed to upload file.";
     }
   }
-
-
-
-
-  // Close the database connection
-  $conn->close();
-} else {
-  header("Location: loginscreen.php");
-  exit();
 }
+if ($_SERVER["REQUEST_METHOD"] == "GET" && isset($_GET['id']) && isset($_GET['type'])) {
+  $id = $_GET['id'];
+  $type = $_GET['type'];
+
+  // Determine which table to delete from
+  $table = '';
+  switch ($type) {
+    case 'hotel':
+      $table = 'hotel';
+      break;
+    case 'restaurant':
+      $table = 'restaurant';
+      break;
+    case 'transport':
+      $table = 'transport';
+      break;
+    case 'tourguide':
+      $table = 'tourguide';
+      break;
+    default:
+      echo 'Invalid service type.';
+      exit;
+  }
+
+  // SQL to delete the record
+  $query = "DELETE FROM $table WHERE id=?";
+  $stmt = $conn->prepare($query);
+  $stmt->bind_param("i", $id);
+  if ($stmt->execute()) {
+    header("Location: profilescreen.php"); // Redirect after deletion
+  } else {
+    echo "Error deleting record: " . $conn->error;
+  }
+}
+
+$conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html>
@@ -96,6 +212,72 @@ if ($userprofile == true) {
       box-sizing: border-box;
       font-family: "Raleway", sans-serif;
       box-sizing: border-box;
+    }
+
+    .btn-delete {
+      padding: 8px 16px;
+      background-color: #ff4d4d;
+      /* Red color for delete button to indicate caution */
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s ease-in-out, transform 0.2s ease;
+    }
+
+    .btn-delete:hover {
+      background-color: #ff6666;
+      /* Lighter red when hovered */
+      transform: translateY(-2px);
+      /* Slight lift effect */
+    }
+
+    .btn-delete:active {
+      transform: translateY(1px);
+      /* Pushed effect when clicked */
+      background-color: #cc0000;
+      /* Darker red to simulate being pressed */
+    }
+
+    .category-heading {
+      text-align: center;
+      font-size: 10px;
+      padding: 1%;
+    }
+
+    .refresh-button {
+      margin-left: auto;
+      /* Pushes the button to the right */
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      font-size: 16px;
+      border-radius: 15px;
+      box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.6);
+      transition: all 0.5s ease;
+      cursor: pointer;
+    }
+
+    .refresh-button:hover {
+      background-color: #71CD75;
+      color: black;
+      box-shadow: 7px 7px 15px rgba(0, 0, 0, 0.6);
+    }
+
+    .refresh-button i.fa-refresh {
+      animation: spin 5s infinite linear;
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     header {
@@ -827,9 +1009,9 @@ if ($userprofile == true) {
 
     .product-item img {
       width: 330px;
-      height: 450px;
+      height: 50px;
       object-fit: cover;
-      /* Ensures the image covers the area, might crop if aspect ratio differs */
+
     }
 
     @media (max-width: 1200px) {
@@ -846,73 +1028,58 @@ if ($userprofile == true) {
       }
     }
 
+    .product-gallery {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      align-items: flex-start;
+    }
+
     .product-card {
+      flex: 1 1 300px;
+      /* Adjust basis to your preference */
       border: 1px solid #ccc;
-      border-radius: 5px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
       margin: 10px;
-      overflow: hidden;
-      width: 330px;
-      height: 650px;
-      display: inline-block;
-      vertical-align: top;
-      position: relative;
+      display: flex;
+      flex-direction: row;
+      /* Align children (image and details) in a row */
+      align-items: center;
+      /* Align items vertically in the center */
+      cursor: pointer;
+      transition: box-shadow 0.3s ease;
     }
 
-
-    .product-image {
-      width: 330px;
-      height: 450px;
-      /* Adjusted to fit the image */
-      object-fit: cover;
-      /* Ensures the image covers the area properly */
+    .product-card:hover {
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
     }
 
-    .product-info {
+    .product-image-container {
       padding: 10px;
-      color: #333;
-      height: 5px;
-      font-size: 25px;
       display: flex;
       align-items: center;
-      /* Center the content vertically */
-      font-weight: bold;
-      /* Bold font for product name */
+      justify-content: center;
+      flex-basis: 30%;
+      /* Adjust image container basis */
+    }
+
+    .product-image {
+      width: 400px;
+      height: 300px;
+      object-fit: cover;
+    }
+
+    .product-details {
+      padding: 10px;
+      flex-grow: 1;
+      font-size: 20px;
+      /* Allow details to fill the remaining space */
     }
 
     .product-info p {
       margin: 5px 0;
+      line-height: 1.5;
     }
 
-    .product-desc {
-      padding: 10px;
-      font-size: 18px;
-      color: #333;
-      height: 130px;
-      /* Adjusted for the description */
-      font-weight: normal;
-      /* Regular font weight for description */
-      overflow: auto;
-      /* Adds scroll if content overflows */
-    }
-
-    .product-desc p {
-      margin: 5px 0;
-    }
-
-    .product-price {
-      font-weight: bold;
-      font-size: 25px;
-      color: black;
-      /* Set the text color to yellow */
-      font-family: "Raleway", sans-serif;
-
-      position: absolute;
-      bottom: 10px;
-      right: 10px;
-
-      /* Black outline around text */
-    }
 
     .maintenance-message {
       text-align: center;
@@ -963,8 +1130,8 @@ if ($userprofile == true) {
     }
 
     #map {
-      height: 400px;
-      width: 50%;
+      height: 500px;
+      width: 100%;
       /* Adjust based on your layout needs */
     }
   </style>
@@ -978,15 +1145,20 @@ if ($userprofile == true) {
         <span>Profile</span>
       </a>
       <a href="#" id="itemsButton" onclick="toggleSections('items')">
-        <i class="material-icons">favorite</i>
-        <span>Provide Service</span>
+        <i class="	fas fa-bed"></i>
+        <span>Hotel</span>
       </a>
       <a href="#" id="addedProductsButton" onclick="toggleSections('addedItems')">
-        <i class="fa fa-shopping-bag"></i>
-        <span>Your Services</span>
+        <i class="material-icons">restaurant</i>
+        <span>Restaurant</span>
       </a>
-      <a href="#">
-        <span>How to Add</span>
+      <a href="#" id="transportButton" onclick="toggleSections('transportServices')">
+        <i class="fa fa-bus"></i>
+        <span>Transport</span>
+      </a>
+      <a href="#" id="tourguideButton" onclick="toggleSections('tourguide')">
+        <i class="fas fa-map-marked-alt"></i>
+        <span>Tour Guide</span>
       </a>
       <hr>
       <a href="./logout.php">
@@ -1002,7 +1174,7 @@ if ($userprofile == true) {
     <div class="heading">
       <ul>
         <li><a href="../home.php" class="under">HOME</a></li>
-        <li><a href="./about.html" class="under">ABOUT US</a></li>
+        <li><a href="../display.php" class="under">SERVICES</a></li>
 
       </ul>
     </div>
@@ -1028,7 +1200,11 @@ if ($userprofile == true) {
   <div id="contentContainer">
     <div id="profileSection" style="background-color: white; color: black; padding: 20px; padding-left: 15%; ">
       <div class="profile-container">
-        <h2>Personal Information</h2>
+        <h2>Personal Information
+          <button onclick="location.reload();" style="margin-left: 700px; cursor: pointer;" class="refresh-button">
+            <i class="fa fa-refresh fa-spin"></i>
+          </button>
+        </h2>
         <div class="section-break">
           <hr />
         </div>
@@ -1051,43 +1227,44 @@ if ($userprofile == true) {
     </div>
     <div id="itemsSection" style="background-color: white; color: black; padding: 20px; padding-left: 15%;">
       <div class="profile-container">
-        <h2>Service Details</h2>
+        <h2>Hotel Details
+          <button onclick="location.reload();" style="margin-left: 850px; cursor: pointer;" class="refresh-button">
+            <i class="fa fa-refresh fa-spin"></i>
+          </button>
+        </h2>
         <div class="section-break">
           <hr />
         </div>
 
         <form action="./profilescreen.php" method="POST" enctype="multipart/form-data">
           <div class="form-group">
-            <label for="category">Category:</label>
-            <select id="category" name="category" required>
-              <option value="hotels">Hotels</option>
-              <option value="restaurants">Restaurants</option>
-              <option value="transport">Transports</option>
-              <option value="tourguide">Tour Guide</option>
-            </select>
+            <div class="input-container" ;>
+              <label for="category">Category</label>
+              <input type="text" id="category" name="category" value="Hotel">
+            </div>
           </div>
           <div class="input-container" ;>
             <label for="email">Email</label>
             <input type="email" id="email" name="email" value="<?php echo $email; ?>">
           </div>
           <div class="input-container">
-            <label for="p_name">Service Name:</label>
-            <input type="text" id="p_name" name="p_name" required>
+            <label for="name">Hotel Name:</label>
+            <input type="text" id="name" name="name" required>
           </div>
 
           <div class="input-container">
             <label for="location">Location:</label>
-            <textarea id="location" name="location" required style="border-radius: 10px; height: 200px; width: 40%; font-size: 15px; padding: 10px"></textarea>
+            <textarea id="location" name="location" required style="border-radius: 10px; height: 100px; width: 40%; font-size: 15px; padding: 10px"></textarea>
           </div>
 
-          <div id="map" style="flex: 1; height: 400px;">
+          <div id="map" style="flex: 1; height: 500px;">
             <!-- Map will be loaded here -->
           </div>
           <div id="form-container" style="height: fit-content; ">
-            <div class="input-container" style="width: 50%;">
+            <div class="input-container" style="width: 70%;">
               <input type="text" id="start" name="start" placeholder="Start Location">
             </div>
-            <div class="input-container" style="width: 50%;">
+            <div class="input-container" style="width: 70%;">
               <input type="text" id="end" name="end" placeholder="Enter Destination">
             </div>
             <div class="input-container">
@@ -1095,43 +1272,54 @@ if ($userprofile == true) {
               </button>
             </div>
           </div>
-
+          <div class="input-container">
+            <label for="price">Price: (Per Room)</label>
+            <div class="price-wrapper">
+              <span class="currency-prefix">Rs.</span>
+              <input type="number" step="10" id="price" name="price" required style="border-radius: 10px; padding: 10px; font-size: 15px; ">
+            </div>
+          </div>
           <div class="input-container image-upload">
             <input type="file" name="uploadfile" value="" />
             <br>
             <br>
-            <button class="btn btn-primary" type="submit" name="upload">Submit Product</button>
+            <button class="btn btn-primary" type="submit" name="uploadHotel">Submit</button>
           </div>
           <br>
           <div class="section-break">
             <hr />
           </div>
-          <div class="maintenance-message">
-            <i style='font-size:34px; color:rgb(104, 20, 20); ' class='fa'>&#xf06a;</i>
-            This page/component is currently under development. Please check back later.
+          <div class="category-heading">
+            <h2>Your Added Hotels</h2>
           </div>
-          <!--<div id="display-image">
-            /*<?php
-              $conn = new mysqli($servername, $username, $password, $dbname); // Assume $conn is your active database connection
-              $result = $conn->query("SELECT * FROM products WHERE email = '" . $conn->real_escape_string($_SESSION['email']) . "'");
-              if ($result->num_rows > 0) {
-                while ($row = $result->fetch_assoc()) {
-                  echo '<div class="product-card">';
-                  echo '<img class="product-image" src="./image/' . htmlspecialchars($row['filename']) . '" alt="' . htmlspecialchars($row['p_name']) . '">';
-                  echo '<div class="product-info">';
-                  echo '<p>' . htmlspecialchars($row['p_name']) . '</p>';
-                  echo '</div>';
-                  echo '<div class="section-break-2"> <hr/></div>';
-                  echo '<div class="product-desc">' . htmlspecialchars($row['description']) . '</div>';
-                  echo '<p class="product-price">Rs. ' . htmlspecialchars($row['price']) . '</p>';
-                  echo '</div>';
-                }
-              } else {
-                echo "<p>No products found.</p>";
+          <div id="display-image" class="product-gallery">
+            <?php
+            $conn = new mysqli($servername, $username, $password, $dbname);
+            $result = $conn->query("SELECT * FROM hotel WHERE email = '" . $conn->real_escape_string($_SESSION['email']) . "'");
+            if ($result->num_rows > 0) {
+              while ($row = $result->fetch_assoc()) {
+                echo '<div class="product-card">';
+                echo '<div class="product-image-container" onclick="toggleDetails(this.parentElement)">';
+                echo '<img class="product-image" src="./image/' . htmlspecialchars($row['filename']) . '" alt="' . htmlspecialchars($row['name']) . '">';
+                echo '</div>';
+                echo '<div class="product-details">';
+                echo '<div class="product-info">';
+                echo '<p><strong>Name: </strong> ' . htmlspecialchars($row['name']) . '</p>';
+                echo '<p><strong>Location: </strong> ' . htmlspecialchars($row['location']) . '</p>';
+                echo '<p><strong>Price: </strong> Rs. ' . htmlspecialchars($row['price']) . ' (Per Room)</p>';
+                echo '<button onclick="deleteHotel(' . $row['id'] . ')" class="btn-delete">Delete</button>';
+                echo '</div>';
+                echo '</div>';  // Close product-details
+                echo '</div>';  // Close product-card
               }
-              $conn->close();
-              ?>*/
-          </div> -->
+            } else {
+              echo "<p>No Hotel found.</p>";
+            }
+            $conn->close();
+            ?>
+          </div>
+
+
         </form>
       </div>
 
@@ -1139,15 +1327,232 @@ if ($userprofile == true) {
 
     <div id="itemsAdded" style="background-color: white; color: black; padding: 20px; padding-left: 15%;">
       <div class="profile-container">
-        <h2>Your Services</h2>
+        <h2>Restaurant Details
+          <button onclick="location.reload();" style="margin-left: 750px; cursor: pointer;" class="refresh-button">
+            <i class="fa fa-refresh fa-spin"></i>
+          </button>
+        </h2>
         <div class="section-break">
           <hr />
         </div>
 
-        <div class="maintenance-message">
-          <i style='font-size:34px; color:rgb(104, 20, 20); ' class='fa'>&#xf06a;</i>
-          This page/component is currently under development. Please check back later.
+        <form action="./profilescreen.php" method="POST" enctype="multipart/form-data">
+          <div class="form-group">
+            <div class="input-container" ;>
+              <label for="category">Category</label>
+              <input type="text" id="category" name="category" value="Restaurant">
+            </div>
+          </div>
+          <div class="input-container" ;>
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="<?php echo $email; ?>">
+          </div>
+          <div class="input-container">
+            <label for="restaurant">Restaurant Name:</label>
+            <input type="text" id="restaurant" name="restaurant" required>
+          </div>
+
+          <div class="input-container">
+            <label for="location">Location:</label>
+            <textarea id="location" name="location" required style="border-radius: 10px; height: 100px; width: 40%; font-size: 15px; padding: 10px"></textarea>
+          </div>
+
+
+
+          <div class="input-container image-upload">
+            <input type="file" name="uploadfile" value="" />
+            <br>
+            <br>
+            <button class="btn btn-primary" type="submit" name="uploadRestaurant">Submit</button>
+          </div>
+          <br>
+          <div class="section-break">
+            <hr />
+          </div>
+          <div class="category-heading">
+            <h2>Your Added Restaurants</h2>
+          </div>
+          <div id="display-image" class="product-gallery">
+            <?php
+            $conn = new mysqli($servername, $username, $password, $dbname);
+            $email = $conn->real_escape_string($_SESSION['email']);
+            $query = "SELECT * FROM restaurant WHERE email = '$email'";
+            $result = $conn->query($query);
+
+            if (!$result) {
+              echo "Error: " . $conn->error;
+            } else {
+              if ($result->num_rows > 0) {
+                while ($row = $result->fetch_assoc()) {
+                  echo '<div class="product-card">';
+                  echo '<div class="product-image-container" onclick="toggleDetails(this.parentElement)">';
+                  echo '<img class="product-image" src="./image/' . htmlspecialchars($row['filename']) . '" alt="' . htmlspecialchars($row['restaurant']) . '">';
+                  echo '</div>';
+                  echo '<div class="product-details">';
+                  echo '<div class="product-info">';
+                  echo '<p><strong>Restaurant Name: </strong> ' . htmlspecialchars($row['restaurant']) . '</p>';
+                  echo '<p><strong>Location: </strong> ' . htmlspecialchars($row['location']) . '</p>';
+                  echo '<button onclick="deleterestaurant(' . $row['id'] . ')" class="btn-delete">Delete</button>';
+                  echo '</div>';
+                  echo '</div>';  // Close product-details
+                  echo '</div>';  // Close product-card
+                }
+              } else {
+                echo "<p>No Restaurant found.</p>";
+              }
+            }
+            $conn->close();
+            ?>
+          </div>
+
+
+        </form>
+      </div>
+    </div>
+
+    <div id="transportServices" style="background-color: white; color: black; padding: 20px; padding-left: 15%; display: none;">
+      <div class="profile-container">
+        <h2>Transport Services
+          <button onclick="location.reload();" style="margin-left: 750px; cursor: pointer;" class="refresh-button">
+            <i class="fa fa-refresh fa-spin"></i>
+          </button>
+        </h2>
+        <div class="section-break">
+          <hr />
         </div>
+        <div class="input-container" ;>
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" value="<?php echo $email; ?>">
+        </div>
+        <form action="./profilescreen.php" method="POST" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="transport">Transport Service Name:</label>
+            <input type="text" id="transport" name="transport" required>
+          </div>
+          <div class="form-group">
+            <label for="service_type">Service Type:</label>
+            <input type="text" id="service_type" name="service_type" required>
+          </div>
+          <div class="form-group">
+            <label for="location">Location:</label>
+            <textarea id="location" name="location" required style="border-radius: 10px; height: 100px; width: 40%; font-size: 15px; padding: 10px"></textarea>
+          </div>
+          <div class="input-container image-upload">
+            <label for="uploadfile">Upload Image:</label>
+            <input type="file" id="uploadfile" name="uploadfile" required>
+            <br>
+            <br>
+            <button type="submit" name="uploadTransport" class="btn btn-primary">Submit</button>
+          </div>
+          <div class="section-break">
+            <hr />
+          </div>
+          <div class="category-heading">
+            <h2>Your Added Transport</h2>
+          </div>
+          <div id="display-image" class="product-gallery">
+            <?php
+            $conn = new mysqli($servername, $username, $password, $dbname);
+            $result = $conn->query("SELECT * FROM transport WHERE email = '" . $conn->real_escape_string($_SESSION['email']) . "'");
+            if ($result->num_rows > 0) {
+              while ($row = $result->fetch_assoc()) {
+                echo '<div class="product-card">';
+                echo '<div class="product-image-container" onclick="toggleDetails(this.parentElement)">';
+                echo '<img class="product-image" src="./image/' . htmlspecialchars($row['filename']) . '" alt="' . '">';
+                echo '</div>';
+                echo '<div class="product-details">';
+                echo '<div class="product-info">';
+                echo '<p><strong>Name: </strong> ' . htmlspecialchars($row['transport']) . '</p>';
+                echo '<p><strong>Location: </strong> ' . htmlspecialchars($row['location']) . '</p>';
+                echo '<p><strong>Service Type: </strong>  ' . htmlspecialchars($row['service_type']) . '</p>';
+                echo '<button onclick="deletetransport(' . $row['id'] . ')" class="btn-delete">Delete</button>';
+                echo '</div>';
+                echo '</div>';  // Close product-details
+                echo '</div>';  // Close product-card
+              }
+            } else {
+              echo "<p>No Services found.</p>";
+            }
+            $conn->close();
+            ?>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="tourguide" style="background-color: white; color: black; padding: 20px; padding-left: 15%; display: none;">
+      <div class="profile-container">
+        <h2>Tour Guide Services
+          <button onclick="location.reload();" style="margin-left: 750px; cursor: pointer;" class="refresh-button">
+            <i class="fa fa-refresh fa-spin"></i>
+          </button>
+        </h2>
+        <div class="section-break">
+          <hr />
+        </div>
+
+        <form action="./profilescreen.php" method="POST" enctype="multipart/form-data">
+          <div class="input-container" ;>
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="<?php echo $email; ?>">
+          </div>
+          <div class="input-container" ;>
+            <label for="guide_mail">Guide Email</label>
+            <input type="email" id="guide_mail" name="guide_mail" required placeholder="Email">
+          </div>
+          <div class="form-group">
+            <label for="fullname">Guide Name:</label>
+            <input type="text" id="fullname" name="fullname" required placeholder="Name">
+          </div>
+          <div class="form-group">
+            <label for="guide_area">Tour Guide (From-To):</label>
+            <input type="text" id="guide_area" name="guide_area" required placeholder="From - To">
+          </div>
+          <div class="form-group">
+            <label for="location">Location (Precise):</label>
+            <textarea id="location" name="location" required placeholder="City, State" style="border-radius: 10px; height: 100px; width: 40%; font-size: 15px; padding: 10px"></textarea>
+          </div>
+          <div class="input-container image-upload">
+            <label for="uploadfile">Upload Image of Guide:</label>
+            <input type="file" id="uploadfile" name="uploadfile" required>
+            <br>
+            <br>
+            <button type="submit" name="uploadGuide" class="btn btn-primary">Submit</button>
+          </div>
+          <div class="section-break">
+            <hr />
+          </div>
+          <div class="category-heading">
+            <h2>Your Added Guides</h2>
+          </div>
+          <div id="display-image" class="product-gallery">
+            <?php
+            $conn = new mysqli($servername, $username, $password, $dbname);
+            $result = $conn->query("SELECT * FROM tourguide WHERE email = '" . $conn->real_escape_string($_SESSION['email']) . "'");
+            if ($result->num_rows > 0) {
+              while ($row = $result->fetch_assoc()) {
+                echo '<div class="product-card">';
+                echo '<div class="product-image-container" onclick="toggleDetails(this.parentElement)">';
+                echo '<img class="product-image" src="./image/' . htmlspecialchars($row['filename']) . '" alt="' . '">';
+                echo '</div>';
+                echo '<div class="product-details">';
+                echo '<div class="product-info">';
+                echo '<p><strong>Name: </strong> ' . htmlspecialchars($row['fullname']) . '</p>';
+                echo '<p><strong>Tour Guide Area (From-To): </strong> ' . htmlspecialchars($row['Guide_area']) . '</p>';
+                echo '<p><strong>Location: </strong> ' . htmlspecialchars($row['location']) . '</p>';
+                echo '<p><strong>Email: </strong>  ' . htmlspecialchars($row['guide_mail']) . '</p>';
+                echo '<button onclick="deleteguide(' . $row['id'] . ')" class="btn-delete">Delete</button>';
+                echo '</div>';
+                echo '</div>';  // Close product-details
+                echo '</div>';  // Close product-card
+              }
+            } else {
+              echo "<p>No Guides found.</p>";
+            }
+            $conn->close();
+            ?>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -1156,7 +1561,16 @@ if ($userprofile == true) {
 
   <script src="https://unpkg.com/ionicons@4.5.10-0/dist/ionicons.js"></script>
   <script src="./JS/cartscreen.js"></script>
-
+  <script>
+    function toggleDetails(element) {
+      var details = element.querySelector(".product-details");
+      if (details.style.display === "none" || details.style.display === "") {
+        details.style.display = "block";
+      } else {
+        details.style.display = "none";
+      }
+    }
+  </script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
 
@@ -1164,20 +1578,41 @@ if ($userprofile == true) {
         var profileSection = document.getElementById("profileSection");
         var itemsSection = document.getElementById("itemsSection");
         var itemsAdded = document.getElementById("itemsAdded");
+        var transportServices = document.getElementById("transportServices");
+        var tourguide = document.getElementById("tourguide");
 
         if (section === 'profile') {
           profileSection.style.display = "block";
           itemsSection.style.display = "none";
           itemsAdded.style.display = "none";
+          transportServices.style.display = "none";
+          tourguide.style.display = "none";
         } else if (section === 'items') {
           profileSection.style.display = "none";
           itemsSection.style.display = "block";
           itemsAdded.style.display = "none";
+          transportServices.style.display = "none";
+          tourguide.style.display = "none";
 
         } else if (section === 'addedItems') {
           profileSection.style.display = "none";
           itemsSection.style.display = "none";
           itemsAdded.style.display = "block";
+          transportServices.style.display = "none";
+          tourguide.style.display = "none";
+
+        } else if (section === 'transportServices') {
+          profileSection.style.display = "none";
+          itemsSection.style.display = "none";
+          itemsAdded.style.display = "none";
+          transportServices.style.display = "block";
+          tourguide.style.display = "none";
+        } else if (section === 'tourguide') {
+          profileSection.style.display = "none";
+          itemsSection.style.display = "none";
+          itemsAdded.style.display = "none";
+          transportServices.style.display = "none";
+          tourguide.style.display = "block";
         }
         localStorage.setItem("lastOpenedSection", section);
       }
@@ -1189,8 +1624,12 @@ if ($userprofile == true) {
           toggleSections('items');
         } else if (lastOpenedSection === 'profile') {
           toggleSections('profile');
-        } else {
+        } else if (lastOpenedSection === 'addedItems') {
           toggleSections('addedItems');
+        } else if (lastOpenedSection === 'transportServices') {
+          toggleSections('transportServices');
+        } else {
+          toggleSections('tourguide');
         }
       }
 
@@ -1210,6 +1649,12 @@ if ($userprofile == true) {
       document.getElementById("addedProductsButton").addEventListener("click", function() {
         toggleSections('addedItems');
       });
+      document.getElementById("transportButton").addEventListener("click", function() {
+        toggleSections('transportServices');
+      });
+      document.getElementById("tourguideButton").addEventListener("click", function() {
+        toggleSections('tourguide');
+      });
     });
   </script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDq7kf2-sAqWNjLPQh8Ye-Nx0pHBSbZ2eM&callback=initMap&libraries=&v=weekly" async defer></script>
@@ -1225,8 +1670,38 @@ if ($userprofile == true) {
   </script>
   <script src="./components/mapdata.js"></script>
 
+  <script>
+    function deleteHotel(id) {
+      if (confirm('Are you sure you want to delete this service?')) {
+        window.location.href = './profilescreen.php?type=hotel&id=' + id;
+      }
 
+    }
+  </script>
+  <script>
+    function deleterestaurant(id) {
+      if (confirm('Are you sure you want to delete this service?')) {
+        window.location.href = './profilescreen.php?type=restaurant&id=' + id;
+      }
 
+    }
+  </script>
+  <script>
+    function deletetransport(id) {
+      if (confirm('Are you sure you want to delete this service?')) {
+        window.location.href = './profilescreen.php?type=transport&id=' + id;
+      }
+
+    }
+  </script>
+  <script>
+    function deleteguide(id) {
+      if (confirm('Are you sure you want to delete this service?')) {
+        window.location.href = './profilescreen.php?type=tourguide&id=' + id;
+      }
+
+    }
+  </script>
 </body>
 
 </html>

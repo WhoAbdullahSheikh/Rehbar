@@ -193,12 +193,14 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'service_provider') {
       display: flex;
       justify-content: space-around;
       align-items: center;
+      text-decoration: none;
       width: 100%;
     }
 
     .option {
       text-align: center;
       margin-bottom: 30px;
+      text-decoration: none;
     }
 
     .option img {
@@ -318,6 +320,50 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'service_provider') {
     .content-img i:hover {
       background-color: rgba(255, 255, 255, 0.5);
     }
+
+    .explore-services {
+      display: flex;
+      justify-content: center;
+      /* Center the button horizontally */
+      margin-top: 10px;
+      /* Space from top content */
+      margin-bottom: 20px;
+      /* Space from bottom content */
+    }
+
+    .explore-button {
+      background-color: #0E172C;
+      /* Vibrant orange */
+      color: white;
+      /* White text */
+      font-size: 28px;
+      /* Slightly larger font */
+      text-decoration: none;
+      /* Remove underline */
+      padding: 10px 20px;
+      /* Top and bottom, Left and right padding */
+      border-radius: 15px;
+      /* Rounded corners */
+      transition: background-color 0.3s, transform 0.2s;
+      /* Smooth transition for hover effects */
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      /* Subtle shadow */
+      display: inline-block;
+      /* Allows for padding and margin to work */
+      margin-bottom: 60px;
+      font-weight: bold;
+    }
+
+    .explore-button:hover {
+      background-color: #B8C1EC;
+      /* Darker shade on hover */
+      color: black;
+      font-weight: bold;
+      transform: scale(1.05);
+      /* Slight increase in size */
+      cursor: pointer;
+      /* Pointer cursor on hover */
+    }
   </style>
 </head>
 
@@ -326,7 +372,7 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'service_provider') {
   <header>
     <a href="#" class="logo"><span>R</span>ehbar</a>
     <nav class="navbar">
-      <a href="#">Services</a>
+      <a href="./display.php">Services</a>
       <a href="#">About</a>
       <a href="#">Contact Us</a>
       <a href="./screens/loginscreen.php">SignIn</a>
@@ -357,25 +403,8 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'service_provider') {
   <!-- Dashboard -->
 
   <section class="dashboard">
-    <div class="top-options">
-      <a href="hotels.php" class="option">
-        <img src="./images/hotell.jpeg" alt="Hotels" width="256" height="256" />
-        <h3>Hotels</h3>
-      </a>
-      <a href="restaurants.php" class="option">
-        <img src="./images/restaurant.jpeg" alt="Restaurants" width="206" height="206" />
-        <h3>Restaurants</h3>
-      </a>
-    </div>
-    <div class="bottom-options">
-      <a href="transport.php" class="option">
-        <img src="./images/transport.jpeg" alt="Transport" width="474" height="474" />
-        <h3>Transport</h3>
-      </a>
-      <a href="tour_guide.php" class="option">
-        <img src="./images/guide.jpeg" alt="Tour Guide" width="474" height="474" />
-        <h3>Tour Guide</h3>
-      </a>
+    <div class="explore-services">
+      <a href="./display.php" class="explore-button">Explore Our Services</a>
     </div>
   </section>
 
