@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 02, 2024 at 01:10 AM
+-- Generation Time: May 09, 2024 at 05:26 PM
 -- Server version: 10.4.14-MariaDB
 -- PHP Version: 7.4.10
 
@@ -109,6 +109,30 @@ INSERT INTO `tourist` (`id`, `fullname`, `email`, `password`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `tourist_tripdata`
+--
+
+CREATE TABLE `tourist_tripdata` (
+  `id` int(11) NOT NULL,
+  `hotel` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `restaurant_name` varchar(255) NOT NULL,
+  `transport_service` varchar(255) NOT NULL,
+  `tour_guide` varchar(255) NOT NULL,
+  `start_location` varchar(255) NOT NULL,
+  `end_destination` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `tourist_tripdata`
+--
+
+INSERT INTO `tourist_tripdata` (`id`, `hotel`, `email`, `restaurant_name`, `transport_service`, `tour_guide`, `start_location`, `end_destination`) VALUES
+(1, 'Mariot', 'mehak@gmail.com', 'Mariot', 'private', 'no', 'Murree', 'Rawalpindi');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `transport`
 --
 
@@ -156,6 +180,12 @@ ALTER TABLE `tourist`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `tourist_tripdata`
+--
+ALTER TABLE `tourist_tripdata`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `transport`
 --
 ALTER TABLE `transport`
@@ -194,6 +224,12 @@ ALTER TABLE `tourguide`
 --
 ALTER TABLE `tourist`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `tourist_tripdata`
+--
+ALTER TABLE `tourist_tripdata`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `transport`
